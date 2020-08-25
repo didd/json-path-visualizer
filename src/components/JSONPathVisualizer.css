@@ -1,0 +1,21 @@
+.tree-view .tree,
+.tree-view .sub-tree {
+  list-style-type: none;
+  padding-left: 0;
+}
+.tree-view .sub-tree {
+  padding-left: 20px;
+}
+
+.tree-view .sub-tree.last {
+  padding-left: 12px;
+}
+
+.tree-view .sub-tree li {
+  padding-top: 5px;
+}
+
+.tree-view .minus {
+  padding-right: 5px;
+  font-size: 18px;
+}
