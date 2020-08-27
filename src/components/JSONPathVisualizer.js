@@ -29,48 +29,77 @@ const JSONPathVisualizer = () => {
     </Fragment>
   );
 
-  const Main = ({ jsonObj }) => (
-    <Fragment>
-      {isObj(jsonObj) && (
-        <li>
-          {Object.keys(jsonObj).map((key, index) => (
-            <Fragment>
-              {jsonObj.hasOwnProperty(key) && (
-                <SubTree jsonObj={jsonObj[key]} objKey={key} index={index} />
-              )}
-            </Fragment>
-          ))}
-        </li>
-      )}
-    </Fragment>
-  );
-
-  const SubTree = ({ jsonObj, objKey }) => {
-    let uiFragment = "";
-
-    if (isObj(jsonObj)) {
-      uiFragment = (
-        <Fragment>
-          <i className="minus" onClick={() => onSubTreeClicked(objKey)}>
-            {selectedKeys.includes(objKey) ? "+" : "-"}
-          </i>{" "}
-          {objKey}
-        </Fragment>
-      );
-    } else {
-      uiFragment = `${objKey}: ${jsonObj}`;
-    }
-    return (
+  const Main = ({ jsonObj }) =>
+    isObj(jsonObj) && (
       <Fragment>
-        {uiFragment}
-        <ul
-          className="sub-tree"
-          style={{ display: selectedKeys.includes(objKey) ? "none" : "block" }}
-        >
-          <Main jsonObj={jsonObj}></Main>
-        </ul>
+        {Object.keys(jsonObj).map((key, index) => (
+          <Fragment>
+            {jsonObj.hasOwnProperty(key) && (
+              <SubTree
+                jsonObj={jsonObj[key]}
+                objKey={key}
+                index={index}
+                isArray={Array.isArray(jsonObj)}
+              />
+            )}
+          </Fragment>
+        ))}
       </Fragment>
     );
+
+  const SubTree = ({ jsonObj, objKey, isArray }) => {
+    let uiFragment = "";
+    let newJsonObj = null;
+
+    if (isObj(jsonObj)) {
+      if (isArray) {
+        newJsonObj = {};
+        Object.keys(jsonObj)
+          .filter((key, index) => index !== 0)
+          .forEach((key, index) => {
+            newJsonObj = { [key]: jsonObj[key], ...newJsonObj };
+          });
+        uiFragment = (
+          <Fragment>
+            <li>
+              <i className="minus" onClick={() => onSubTreeClicked(objKey)}>
+                {selectedKeys.includes(objKey) ? "+" : "-"}
+              </i>{" "}
+              {`${Object.keys(jsonObj)[0]}: ${
+                jsonObj[Object.keys(jsonObj)[0]]
+              }`}
+              <ul className="sub-tree">
+                <Main jsonObj={newJsonObj}></Main>
+              </ul>
+            </li>
+          </Fragment>
+        );
+      } else {
+        uiFragment = (
+          <Fragment>
+            <li>
+              <i className="minus" onClick={() => onSubTreeClicked(objKey)}>
+                {selectedKeys.includes(objKey) ? "+" : "-"}
+              </i>{" "}
+              {objKey}
+              <ul className="sub-tree">
+                <Main jsonObj={newJsonObj ? newJsonObj : jsonObj}></Main>
+              </ul>
+            </li>
+          </Fragment>
+        );
+      }
+    } else {
+      uiFragment = (
+        <Fragment>
+          <li>
+            {`${objKey}: ${jsonObj}`}
+            <Main jsonObj={newJsonObj ? newJsonObj : jsonObj}></Main>
+          </li>
+        </Fragment>
+      );
+    }
+    return uiFragment;
   };
 
   const onSubTreeClicked = (objKey) => {
