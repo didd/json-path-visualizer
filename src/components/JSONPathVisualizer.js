@@ -1,23 +1,16 @@
 import React, { Fragment, useState, useRef } from "react";
 
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faMinusSquare } from "@fortawesome/free-solid-svg-icons";
+
 import "./JSONPathVisualizer.css";
 
 const JSONPathVisualizer = () => {
   const inputUploadFile = useRef(null);
+  const subTree = useRef([]);
 
-  const [selectedKeys, setSelectedKeys] = useState([]);
   const [jsonObj, setJsonObj] = useState({});
-
-  const traverse = (obj) => {
-    if (!Array.isArray(obj) && typeof obj === "object" && obj !== null) {
-      Object.keys(obj).forEach((key) => {
-        console.log(key, obj);
-        if (obj.hasOwnProperty(key)) {
-          traverse(obj[key]);
-        }
-      });
-    }
-  };
+  let currentIndex = 0;
 
   const isObj = (obj) => typeof obj === "object" && obj !== null;
 
@@ -32,24 +25,29 @@ const JSONPathVisualizer = () => {
   const Main = ({ jsonObj }) =>
     isObj(jsonObj) && (
       <Fragment>
-        {Object.keys(jsonObj).map((key, index) => (
-          <Fragment>
-            {jsonObj.hasOwnProperty(key) && (
-              <SubTree
-                jsonObj={jsonObj[key]}
-                objKey={key}
-                index={index}
-                isArray={Array.isArray(jsonObj)}
-              />
-            )}
-          </Fragment>
-        ))}
+        {Object.keys(jsonObj).map((key) => {
+          currentIndex += 1;
+          return (
+            <Fragment>
+              {jsonObj.hasOwnProperty(key) && (
+                <SubTree
+                  jsonObj={jsonObj[key]}
+                  objKey={key}
+                  currentIndex={currentIndex}
+                  isArray={Array.isArray(jsonObj)}
+                />
+              )}
+            </Fragment>
+          );
+        })}
       </Fragment>
     );
 
-  const SubTree = ({ jsonObj, objKey, isArray }) => {
+  const SubTree = ({ jsonObj, objKey, isArray, currentIndex }) => {
     let uiFragment = "";
     let newJsonObj = null;
+
+    console.log(currentIndex);
 
     if (isObj(jsonObj)) {
       if (isArray) {
@@ -62,13 +60,13 @@ const JSONPathVisualizer = () => {
         uiFragment = (
           <Fragment>
             <li>
-              <i className="minus" onClick={() => onSubTreeClicked(objKey)}>
-                {selectedKeys.includes(objKey) ? "+" : "-"}
-              </i>{" "}
+              <span className="plus-minus" onClick={onSubTreeClicked}>
+                <FontAwesomeIcon icon={faMinusSquare} />
+              </span>
               {`${Object.keys(jsonObj)[0]}: ${
                 jsonObj[Object.keys(jsonObj)[0]]
               }`}
-              <ul className="sub-tree">
+              <ul className="sub-tree" ref={subTree.current[currentIndex - 1]}>
                 <Main jsonObj={newJsonObj}></Main>
               </ul>
             </li>
@@ -78,11 +76,11 @@ const JSONPathVisualizer = () => {
         uiFragment = (
           <Fragment>
             <li>
-              <i className="minus" onClick={() => onSubTreeClicked(objKey)}>
-                {selectedKeys.includes(objKey) ? "+" : "-"}
-              </i>{" "}
+              <span className="plus-minus" onClick={onSubTreeClicked}>
+                <FontAwesomeIcon icon={faMinusSquare} />
+              </span>
               {objKey}
-              <ul className="sub-tree">
+              <ul className="sub-tree" ref={subTree.current[currentIndex - 1]}>
                 <Main jsonObj={newJsonObj ? newJsonObj : jsonObj}></Main>
               </ul>
             </li>
@@ -102,8 +100,8 @@ const JSONPathVisualizer = () => {
     return uiFragment;
   };
 
-  const onSubTreeClicked = (objKey) => {
-    setSelectedKeys([objKey, ...selectedKeys]);
+  const onSubTreeClicked = (event) => {
+    console.log(subTree.current[0]);
   };
 
   const onFileUpload = (event) => {

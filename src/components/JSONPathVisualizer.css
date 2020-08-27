@@ -15,7 +15,8 @@
   padding-top: 5px;
 }
 
-.tree-view .minus {
+.tree-view .plus-minus {
   padding-right: 5px;
   font-size: 18px;
+  cursor: pointer;
 }
