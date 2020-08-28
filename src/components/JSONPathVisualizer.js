@@ -70,7 +70,7 @@ const JSONPathVisualizer = () => {
     let icon = faMinusSquare;
 
     if (matchFound(objKey, jsonObj)) {
-      highlightStyle = { color: "#D85754" };
+      highlightStyle = { color: "#F44336" };
     }
     if (isObj(jsonObj)) {
       if (isObj(tree[currentIndex])) {
@@ -164,6 +164,8 @@ const JSONPathVisualizer = () => {
     if (event.key === "Enter") {
       if (jsonObj && event.target.value.charAt(0) === "$") {
         setNodes(jp.nodes(jsonObj, event.target.value));
+      } else {
+        setNodes([]);
       }
     }
   };
