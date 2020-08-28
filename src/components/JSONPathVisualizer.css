@@ -20,3 +20,11 @@
   font-size: 18px;
   cursor: pointer;
 }
+
+.hide {
+  display: none;
+}
+
+.show {
+  display: block;
+}

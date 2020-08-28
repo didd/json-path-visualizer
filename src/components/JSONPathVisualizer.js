@@ -1,18 +1,38 @@
 import React, { Fragment, useState, useRef } from "react";
 
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faMinusSquare } from "@fortawesome/free-solid-svg-icons";
+import { faMinusSquare, faPlusSquare } from "@fortawesome/free-solid-svg-icons";
 
 import "./JSONPathVisualizer.css";
 
+const jp = require("jsonpath");
+const deepEqual = require("fast-deep-equal");
+
 const JSONPathVisualizer = () => {
   const inputUploadFile = useRef(null);
-  const subTree = useRef([]);
 
-  const [jsonObj, setJsonObj] = useState({});
+  const [jsonObj, setJsonObj] = useState(null);
+  const [nodes, setNodes] = useState([]);
+  const [tree, setTree] = useState([]);
+  const [message, setMessage] = useState("");
+
   let currentIndex = 0;
 
   const isObj = (obj) => typeof obj === "object" && obj !== null;
+
+  const matchFound = (objKey, jsonObj) => {
+    let hasMatch = false;
+    for (let node of nodes) {
+      if (
+        node.path[node.path.length - 1].toString() === objKey.toString() &&
+        deepEqual(node.value, jsonObj)
+      ) {
+        hasMatch = true;
+        break;
+      }
+    }
+    return hasMatch;
+  };
 
   const Tree = ({ jsonObj }) => (
     <Fragment>
@@ -25,15 +45,14 @@ const JSONPathVisualizer = () => {
   const Main = ({ jsonObj }) =>
     isObj(jsonObj) && (
       <Fragment>
-        {Object.keys(jsonObj).map((key) => {
-          currentIndex += 1;
+        {Object.keys(jsonObj).map((key, index) => {
           return (
-            <Fragment>
+            <Fragment key={`${key}-${index}`}>
               {jsonObj.hasOwnProperty(key) && (
                 <SubTree
                   jsonObj={jsonObj[key]}
                   objKey={key}
-                  currentIndex={currentIndex}
+                  currentIndex={currentIndex++}
                   isArray={Array.isArray(jsonObj)}
                 />
               )}
@@ -46,10 +65,20 @@ const JSONPathVisualizer = () => {
   const SubTree = ({ jsonObj, objKey, isArray, currentIndex }) => {
     let uiFragment = "";
     let newJsonObj = null;
+    let displayStyle = { display: "block" };
+    let highlightStyle = {};
+    let icon = faMinusSquare;
 
-    console.log(currentIndex);
-
+    if (matchFound(objKey, jsonObj)) {
+      highlightStyle = { color: "#D85754" };
+    }
     if (isObj(jsonObj)) {
+      if (isObj(tree[currentIndex])) {
+        if (!tree[currentIndex].show) {
+          displayStyle = { display: "none" };
+          icon = faPlusSquare;
+        }
+      }
       if (isArray) {
         newJsonObj = {};
         Object.keys(jsonObj)
@@ -59,14 +88,18 @@ const JSONPathVisualizer = () => {
           });
         uiFragment = (
           <Fragment>
-            <li>
-              <span className="plus-minus" onClick={onSubTreeClicked}>
-                <FontAwesomeIcon icon={faMinusSquare} />
+            <li style={{ ...highlightStyle }}>
+              <span
+                className="plus-minus"
+                onClick={() => showTree(currentIndex)}
+                style={{ color: "#000" }}
+              >
+                <FontAwesomeIcon icon={icon} />
               </span>
               {`${Object.keys(jsonObj)[0]}: ${
                 jsonObj[Object.keys(jsonObj)[0]]
               }`}
-              <ul className="sub-tree" ref={subTree.current[currentIndex - 1]}>
+              <ul className="sub-tree" style={{ ...displayStyle }}>
                 <Main jsonObj={newJsonObj}></Main>
               </ul>
             </li>
@@ -75,12 +108,16 @@ const JSONPathVisualizer = () => {
       } else {
         uiFragment = (
           <Fragment>
-            <li>
-              <span className="plus-minus" onClick={onSubTreeClicked}>
-                <FontAwesomeIcon icon={faMinusSquare} />
+            <li style={{ ...highlightStyle }}>
+              <span
+                className="plus-minus"
+                onClick={() => showTree(currentIndex)}
+                style={{ color: "#000" }}
+              >
+                <FontAwesomeIcon icon={icon} />
               </span>
               {objKey}
-              <ul className="sub-tree" ref={subTree.current[currentIndex - 1]}>
+              <ul className="sub-tree" style={{ ...displayStyle }}>
                 <Main jsonObj={newJsonObj ? newJsonObj : jsonObj}></Main>
               </ul>
             </li>
@@ -90,7 +127,7 @@ const JSONPathVisualizer = () => {
     } else {
       uiFragment = (
         <Fragment>
-          <li>
+          <li style={highlightStyle}>
             {`${objKey}: ${jsonObj}`}
             <Main jsonObj={newJsonObj ? newJsonObj : jsonObj}></Main>
           </li>
@@ -100,24 +137,58 @@ const JSONPathVisualizer = () => {
     return uiFragment;
   };
 
-  const onSubTreeClicked = (event) => {
-    console.log(subTree.current[0]);
+  const showTree = (currentIndex) => {
+    let _tree = [...tree];
+    _tree[currentIndex] = {
+      show: _tree[currentIndex] && !_tree[currentIndex].show,
+    };
+    setTree(_tree);
   };
 
   const onFileUpload = (event) => {
     const reader = new FileReader();
     reader.onload = function fileReadCompleted() {
-      let parsedObj = JSON.parse(reader.result);
-      setJsonObj(parsedObj);
+      try {
+        let parsedObj = JSON.parse(reader.result);
+        setMessage("");
+        setJsonObj(parsedObj);
+      } catch {
+        console.error("Unable to parse large json file!");
+        setMessage("Unable to parse large json file!");
+      }
     };
     reader.readAsText(event.target.files[0]);
   };
 
+  const search = (event) => {
+    if (event.key === "Enter") {
+      if (jsonObj && event.target.value.charAt(0) === "$") {
+        setNodes(jp.nodes(jsonObj, event.target.value));
+      }
+    }
+  };
+
   return (
     <Fragment>
-      <input type="text" className="input" />
+      <input
+        type="text"
+        className="input"
+        placeholder="Expression"
+        onKeyUp={search}
+      />
       <div className="tree-view">
-        <Tree jsonObj={jsonObj} />
+        <div
+          style={{
+            minHeight: "400px",
+            maxHeight: "400px",
+            overflow: "auto",
+            margin: "15px 0",
+            background: "#fff",
+            padding: "10px",
+          }}
+        >
+          {message ? message : <Tree jsonObj={jsonObj} />}{" "}
+        </div>
         <input
           ref={inputUploadFile}
           type="file"
