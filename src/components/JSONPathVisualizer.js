@@ -53,7 +53,6 @@ const JSONPathVisualizer = () => {
                   jsonObj={jsonObj[key]}
                   objKey={key}
                   currentIndex={currentIndex++}
-                  isArray={Array.isArray(jsonObj)}
                 />
               )}
             </Fragment>
@@ -62,7 +61,7 @@ const JSONPathVisualizer = () => {
       </Fragment>
     );
 
-  const SubTree = ({ jsonObj, objKey, isArray, currentIndex }) => {
+  const SubTree = ({ jsonObj, objKey, currentIndex }) => {
     let uiFragment = "";
     let newJsonObj = null;
     let displayStyle = { display: "block" };
@@ -71,6 +70,7 @@ const JSONPathVisualizer = () => {
 
     if (matchFound(objKey, jsonObj)) {
       highlightStyle = { color: "#F44336" };
+      console.log(objKey, jsonObj);
     }
     if (isObj(jsonObj)) {
       if (isObj(tree[currentIndex])) {
@@ -79,51 +79,23 @@ const JSONPathVisualizer = () => {
           icon = faPlusSquare;
         }
       }
-      if (isArray) {
-        newJsonObj = {};
-        Object.keys(jsonObj)
-          .filter((key, index) => index !== 0)
-          .forEach((key, index) => {
-            newJsonObj = { [key]: jsonObj[key], ...newJsonObj };
-          });
-        uiFragment = (
-          <Fragment>
-            <li style={{ ...highlightStyle }}>
-              <span
-                className="plus-minus"
-                onClick={() => showTree(currentIndex)}
-                style={{ color: "#000" }}
-              >
-                <FontAwesomeIcon icon={icon} />
-              </span>
-              {`${Object.keys(jsonObj)[0]}: ${
-                jsonObj[Object.keys(jsonObj)[0]]
-              }`}
-              <ul className="sub-tree" style={{ ...displayStyle }}>
-                <Main jsonObj={newJsonObj}></Main>
-              </ul>
-            </li>
-          </Fragment>
-        );
-      } else {
-        uiFragment = (
-          <Fragment>
-            <li style={{ ...highlightStyle }}>
-              <span
-                className="plus-minus"
-                onClick={() => showTree(currentIndex)}
-                style={{ color: "#000" }}
-              >
-                <FontAwesomeIcon icon={icon} />
-              </span>
-              {objKey}
-              <ul className="sub-tree" style={{ ...displayStyle }}>
-                <Main jsonObj={newJsonObj ? newJsonObj : jsonObj}></Main>
-              </ul>
-            </li>
-          </Fragment>
-        );
-      }
+      uiFragment = (
+        <Fragment>
+          <li style={{ ...highlightStyle }}>
+            <span
+              className="plus-minus"
+              onClick={() => showTree(currentIndex)}
+              style={{ color: "#000" }}
+            >
+              <FontAwesomeIcon icon={icon} />
+            </span>
+            {objKey}
+            <ul className="sub-tree" style={{ ...displayStyle }}>
+              <Main jsonObj={newJsonObj ? newJsonObj : jsonObj}></Main>
+            </ul>
+          </li>
+        </Fragment>
+      );
     } else {
       uiFragment = (
         <Fragment>
