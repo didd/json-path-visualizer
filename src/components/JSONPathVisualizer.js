@@ -153,8 +153,8 @@ const JSONPathVisualizer = () => {
         setMessage("");
         setJsonObj(parsedObj);
       } catch {
-        console.error("Unable to parse large json file!");
-        setMessage("Unable to parse large json file!");
+        console.error("Unable to parse json file!");
+        setMessage("Unable to parse json file!");
       }
     };
     reader.readAsText(event.target.files[0]);
